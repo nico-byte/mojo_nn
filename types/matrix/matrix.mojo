@@ -3,6 +3,10 @@ from memory import memset_zero
 from random import randn, rand
 from algorithm import vectorize
 
+# combined code from offical Mat Mul Doc and some types from github
+# https://docs.modular.com/mojo/notebooks/Matmul.html
+# https://github.com/Moosems/Mojo-Types
+
 alias type = DType.float64
 alias nelts = simdwidthof[type]()
 
