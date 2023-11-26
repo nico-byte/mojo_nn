@@ -1,11 +1,14 @@
 import numpy as np
 
+# change path to data here
+pathToData = "./data"
+
 def _retrieve_data():
-    training_data_file = open("data/mnist_train.csv", "r")
+    training_data_file = open(f"{pathToData}/mnist_train.csv", "r")
     training_data_list = training_data_file.readlines()
     training_data_file.close()
 
-    test_data_file = open("data/mnist_test.csv", "r")
+    test_data_file = open(f"{pathToData}/mnist_test.csv", "r")
     test_data_list = test_data_file.readlines()
     test_data_file.close()
 

@@ -12,7 +12,6 @@ alias nelts = simdwidthof[type]()
 
 struct Matrix:
     """Simple 2D Matrix that uses Float64."""
-    # Expects when doing math with other Matrices that they all have the same dimensions
     var data: DTypePointer[type]
     var height: Int
     var width: Int
@@ -30,26 +29,13 @@ struct Matrix:
         self.height = height
         self.width = width
 
+    # Initialize with only one value
     fn __init__(inout self, owned default_value: Float64, height: Int, width: Int) -> None:
         self.height = height if height > 0 else 1
         self.width = width if width > 0 else 1
         self.data = DTypePointer[type].alloc(height * width)
         for i in range(height * width):
             self.data.store(i, default_value)
-    
-    # fn __init__[*Ts: ListLiteral[Float32]](inout self, owned given_list: ListLiteral[Ts]) -> None:
-    #     self.height = given_list.__len__()
-    #     self.width = given_list.get[0, ListLiteral[Float32]]().__len__()
-    #     self.total_items = self.height * self.width
-    #     self.data = Pointer[Float32].alloc(self.total_items)
-    #     let lists = Pointer.address_of(given_list).bitcast[ListLiteral[Float32]]()
-    #     var current_loc = 0
-    #     for i in range(self.height):
-    #         var current_list: ListLiteral[Float32] = lists.load(i)
-    #         let list_elems = Pointer.address_of(current_list).bitcast[Float32]()
-    #         for j in range(self.width):
-    #             self.data.store(current_loc, list_elems.load(j))
-    #             current_loc += 1
 
     @staticmethod
     fn randn(height: Int, width: Int) -> Self:
@@ -216,17 +202,10 @@ struct Matrix:
             print("]," if i != self.height - 1 else "]")
         print("]")
     
-    fn __matmul__(borrowed self, rhs: Matrix) -> Matrix:
-        var C: Matrix = Matrix(self.height, rhs.width)
-        if self.width != rhs.height:
-            print("Mat Mul not possible -> A.width: " + String(self.width) + " != B.height: " + String(rhs.height))
-        for i in range(self.height):
-            for j in range(rhs.width):
-                for k in range(self.width):
-                    C[i, j] += rhs[i, k] * rhs[k, j]
-        return C
-    
     fn transpose(borrowed self) -> Matrix:
+        """
+        Transposing the matrix - e.g. [3, 2] to [2, 3] but shape doesn't matter.
+        """
         var new_matrix: Matrix = Matrix(self.width, self.height)
         for i in range(new_matrix.height):
             for j in range(new_matrix.width):
@@ -239,8 +218,34 @@ struct Matrix:
     fn load[nelts: Int](self, y: Int, x: Int) -> SIMD[DType.float64, nelts]:
         return self.data.simd_load[nelts](y * self.width + x)
 
+    fn __matmul__(borrowed self, rhs: Matrix) -> Matrix:
+        """
+        Python like mat mul
+        C: Output Matrix
+        A: Input Matrix A
+        B: Input Matrix B
+        C += A @ B
+        This function could be better.
+        """
+        var C: Matrix = Matrix(self.height, rhs.width)
+        if self.width != rhs.height:
+            print("Mat Mul not possible -> A.width: " + String(self.width) + " != B.height: " + String(rhs.height))
+        for i in range(self.height):
+            for j in range(rhs.width):
+                for k in range(self.width):
+                    C[i, j] += rhs[i, k] * rhs[k, j]
+        return C
+    
     @staticmethod
     fn matmul_vectorized(C: Matrix, A: Matrix, B: Matrix):
+        """
+        Vectorized mat mul from the docs
+        C: Output Matrix
+        A: Input Matrix A
+        B: Input Matrix B
+        C += A @ B
+        This function could be better.
+        """
         if A.width != B.height:
             print("Mat Mul not possible -> A.width: " + String(A.width) + " != B.height: " + String(B.height))
             
@@ -253,8 +258,17 @@ struct Matrix:
                     C.store[nelts](m, n, C.load[nelts](m, n) + A[m, k] * B.load[nelts](k, n))
                 vectorize[nelts, dot](C.width)
 
+    # Matrices have to have the same dimensions
     @staticmethod
     fn matmul_vectorized_scal_neg(C: Matrix, A: Matrix, B: Float64):
+        """
+        Used for updating the weights and bias of the network, matrices need to be in the same shape.
+        C: Output Matrix
+        A: Input Matrix A
+        B: Input Matrix B
+        C -= A @ B
+        This function could be better.
+        """
         for m in range(C.height):
             for k in range(A.width):
                 @parameter
@@ -262,8 +276,17 @@ struct Matrix:
                     C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B)
                 vectorize[nelts, dot](C.width)
 
+    # Matrices have to have the same dimensions
     @staticmethod
     fn matmul_vectorized_neg(C: Matrix, A: Matrix, B: Matrix):
+        """
+        Used for updating the weights and bias of the network, matrices need to be in the same shape.
+        C: Output Matrix
+        A: Input Matrix A
+        B: Input Integer B
+        C -= A * B
+        This function could be better.
+        """
         if A.height != B.height != C.height and A.width != B.width != C.width:
             print("Negative Mat Mul not possible -> A.height: " + String(A.height) + ", A.width: " + String(A.width) + " and B.height: " + String(B.height), ", B.width: " + String(B.width) + " don't match C.height: " + String(C.height) + ", C.width: " + String(C.width))
         for m in range(C.height):

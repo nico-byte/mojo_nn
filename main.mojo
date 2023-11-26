@@ -3,12 +3,6 @@ from types import Matrix
 from python import Python
 from time import now
 
-fn printHelloWorld(x: StringLiteral):
-    print(x)
-
-
-alias type = DType.float64
-
 fn main() raises:
     let input_nodes = 784
     let hidden_nodes_1 = 150
@@ -17,7 +11,7 @@ fn main() raises:
     let learning_rate = 1e-5
 
     var nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
-    # load dataset first - https://www.kaggle.com/datasets/oddrationale/mnist-in-csv
+    # download dataset first - https://www.kaggle.com/datasets/oddrationale/mnist-in-csv
     Python.add_to_path("./")
     let DataLoader = Python.import_module("DataLoader")
     let np = Python.import_module("numpy")
@@ -63,6 +57,12 @@ fn main() raises:
     var iter: Int = 0
     print(labels.height, labels.width)
     print(new_label.height, new_label.width)
+    
+    # for now the loops only evaluate the time taken for the operations of the network
+    # it outputs a float that represents the time taken for 1 iteration of the network
+    # can be changed to output either the error or the outputs but need to be adjusted
+    # in the train and query function of the network
+    # training inputs and labels and test inputs and labels are ready to go
     
     var time_now = now()
     for i in range(inputs.width):
