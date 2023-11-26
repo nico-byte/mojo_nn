@@ -76,7 +76,7 @@ fn main() raises:
 
     var avg_time: Float64 = time_sum / inputs.width
     print("verify iterations: " + String(iter))
-    print("avg mat duration/iter: " + String(avg_time / 1e3) + " microseconds")
+    print("avg mat duration/iter: " + String(avg_time / 1e6) + " milliseconds")
     print("Runtime (Forward Pass + Backward Pass): " + String((now() - time_now) / 1e9) + " seconds")
 
     iter = 0
