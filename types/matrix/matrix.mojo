@@ -50,19 +50,11 @@ struct Matrix:
         return Self(height, width, data)
 
     
-    fn __getitem__(borrowed self, row: Int, column: Int) -> Float64:
-        let loc: Int = (row * self.width) + column
-        if loc > self.height * self.width:
-            print("Warning: you're trying to get an index out of bounds, memory violation")
-            return self.data.load(0)
-        return self.data.load(loc)
+    fn __getitem__(self, y: Int, x: Int) -> Float64:
+        return self.load[1](y, x)
 
-    fn __setitem__(inout self, row: Int, column: Int, item: Float64) -> None:
-        let loc: Int = (row * self.width) + column
-        if loc > self.height * self.width:
-            print("Warning: you're trying to set an index out of bounds, doing nothing")
-            return
-        self.data.store(loc, item)
+    fn __setitem__(self, y: Int, x: Int, val: Float64):
+        return self.store[1](y, x, val)
 
     fn __del__(owned self) -> None:
         self.data.free()
@@ -236,6 +228,11 @@ struct Matrix:
                     C[i, j] += rhs[i, k] * rhs[k, j]
         return C
     
+    fn update(C: Matrix, A: Matrix, B: Float64):
+        for i in range(C.height):
+            for j in range(C.width):
+                C[i, j] = C[i, j] - A[i, j] * B
+    
     @staticmethod
     fn matmul_vectorized(C: Matrix, A: Matrix, B: Matrix):
         """
@@ -258,9 +255,8 @@ struct Matrix:
                     C.store[nelts](m, n, C.load[nelts](m, n) + A[m, k] * B.load[nelts](k, n))
                 vectorize[nelts, dot](C.width)
 
-    # Matrices have to have the same dimensions
     @staticmethod
-    fn matmul_vectorized_scal_neg(C: Matrix, A: Matrix, B: Float64):
+    fn matmul_vectorized_scal(C: Matrix, A: Matrix, B: Float64):
         """
         Used for updating the weights and bias of the network, matrices need to be in the same shape.
         C: Output Matrix
@@ -273,9 +269,10 @@ struct Matrix:
             for k in range(A.width):
                 @parameter
                 fn dot[nelts : Int](n : Int):
-                    C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B)
+                    C.store[nelts](m, n, C.load[nelts](m, n) + A[m, k] * B)
                 vectorize[nelts, dot](C.width)
 
+    
     # Matrices have to have the same dimensions
     @staticmethod
     fn matmul_vectorized_neg(C: Matrix, A: Matrix, B: Matrix):
@@ -295,7 +292,20 @@ struct Matrix:
                 fn dot[nelts : Int](n : Int):
                     C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B.load[nelts](k, n))
                 vectorize[nelts, dot](C.width)
-
     
-
-        
+    @staticmethod
+    fn matmul_vectorized_scal_neg(C: Matrix, A: Matrix, B: Float64):
+        """
+        Used for updating the weights and bias of the network, matrices need to be in the same shape.
+        C: Output Matrix
+        A: Input Matrix A
+        B: Input Matrix B
+        C -= A @ B
+        This function could be better.
+        """
+        for m in range(C.height):
+            for k in range(A.width):
+                @parameter
+                fn dot[nelts : Int](n : Int):
+                    C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B)
+                vectorize[nelts, dot](C.width)

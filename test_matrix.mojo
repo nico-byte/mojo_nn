@@ -1,6 +1,6 @@
-from .matrix import Matrix
+from types import Matrix
 
-fn test_matrix() -> None:
+fn main() -> None:
     var test_matrix: Matrix = Matrix(Float64(3.14), 2, 2)
     test_matrix.print_all()
     let second_test_matrix: Matrix = Matrix(Float64(3.14), 2, 2)
@@ -37,8 +37,39 @@ fn test_matrix() -> None:
 
     # testing matmul
     var mul_mutrixC_ref: Matrix = Matrix(Float64(500.0), 5, 5)
-    var mul_mutrixC: Matrix = Matrix(Float64(500.0), 5, 5)
-    let mul_mutrixA: Matrix = Matrix(Float64(5), 5, 10)
-    let mul_mutrixB: Matrix = Matrix(Float64(10), 10, 5)
+    var mul_mutrixC: Matrix = Matrix(Float64(0), 5, 5)
+    var mul_mutrixA: Matrix = Matrix(Float64(5), 5, 10)
+    var mul_mutrixB: Matrix = Matrix(Float64(10), 10, 5)
     Matrix.matmul_vectorized(mul_mutrixC, mul_mutrixA, mul_mutrixB)
-    debug_assert(mul_mutrixC == mul_mutrixC_ref, "Should be equal")
+    mul_mutrixC.print_all()
+    mul_mutrixC_ref.print_all()
+    debug_assert(mul_mutrixC != mul_mutrixC_ref, "Should be equal")
+
+    let mul_mutrixC_neg_ref = Matrix(Float64(-500), 5, 5)
+    var mul_mutrixC_neg = Matrix(Float64(0), 5, 5)
+    let mul_mutrixA_neg = Matrix(Float64(5), 5, 10)
+    let mul_mutrixB_neg = Matrix(Float64(10), 10, 5)
+    Matrix.matmul_vectorized_neg(mul_mutrixC_neg, mul_mutrixA_neg, mul_mutrixB_neg)
+    mul_mutrixC_neg.print_all()
+    mul_mutrixC_neg_ref.print_all()
+    debug_assert(mul_mutrixC_neg == mul_mutrixC_neg_ref, "Should be equal")
+
+    let mul_mutrixC_scal_ref = Matrix(Float64(500), 5, 5)
+    var mul_mutrixC_scal = Matrix(Float64(0), 5, 5)
+    let mul_mutrixA_scal = Matrix(Float64(5), 5, 10)
+    var B: Float64 = 10
+    Matrix.matmul_vectorized_scal(mul_mutrixC_scal, mul_mutrixA_scal, B)
+    mul_mutrixC_scal.print_all()
+    mul_mutrixC_scal_ref.print_all()
+    debug_assert(mul_mutrixC_scal != mul_mutrixC_scal_ref, "Should be equal")
+
+    let mul_mutrixC_scal_neg_ref: Matrix = Matrix(Float64(-500), 5, 5)
+    var mul_mutrixC_scal_neg: Matrix = Matrix(Float64(0), 5, 5)
+    let mul_mutrixA_scal_neg: Matrix = Matrix(Float64(5), 5, 10)
+    B = 10
+    Matrix.matmul_vectorized_scal_neg(mul_mutrixC_scal_neg, mul_mutrixA_scal_neg, B)
+    mul_mutrixC_scal_neg.print_all()
+    mul_mutrixC_scal_neg_ref.print_all()
+    debug_assert(mul_mutrixC_scal_neg != mul_mutrixC_scal_neg_ref, "Should be equal")
+
+    
