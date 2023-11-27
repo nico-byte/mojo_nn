@@ -119,6 +119,7 @@ struct Network:
         return output
     
     fn train(inout self, inputs: Matrix, targets: Matrix, train: Bool = True, peval: Bool = False) -> Float64:
+        # init some matrices
         var inputs_h1: Matrix = Matrix(inputs.width, self._wih.width)
         var inputs_h2: Matrix = Matrix(inputs_h1.height, self._whh.width)
         var output_error: Matrix = Matrix(1, self._onodes)
@@ -128,14 +129,17 @@ struct Network:
         
         let time_now = now()
         
+        # calc output hidden layer1
         Matrix.matmul_vectorized(inputs_h1, inputs.transpose(), self._wih)
         inputs_h1 = inputs_h1 + self._bih_l1
         inputs_h1 = self.lrelu(inputs_h1)
         
+        # calc output hidden layer 2
         Matrix.matmul_vectorized(inputs_h2, inputs_h1, self._whh)
         inputs_h2 = inputs_h2 + self._bih_l2
         inputs_h2 = self.tanh(inputs_h2)
         
+        # calc output output layer
         Matrix.matmul_vectorized(self._outputs, inputs_h2, self._who)
         self._outputs = self._outputs + self._bho
         self._outputs = self.softmax_1d(self._outputs)
@@ -146,6 +150,7 @@ struct Network:
         Matrix.matmul_vectorized(hidden_errors_2, output_error_gradient, self._who.transpose())
         Matrix.matmul_vectorized(hidden_errors_1, (hidden_errors_2 * self.dtanh(inputs_h2)), self._whh.transpose())
         
+        # could return everything as matrices
         if train:
             self._update(inputs, inputs_h1, inputs_h2, hidden_errors_1, hidden_errors_2, output_error_gradient)
             let end_time = Float64(now() - time_now)
@@ -177,6 +182,7 @@ struct Network:
         Matrix.update(self._whh, ih1_ho2, self.lr)
         Matrix.update(self._wih, i_ho1, self.lr)
 
+        # sum of the A matrices would be better
         Matrix.update(self._bho, output_error_gradient, self.lr)
         Matrix.update(self._bih_l1, ho2_drelu, self.lr)
         Matrix.update(self._bih_l2, ho1_drelu, self.lr)
