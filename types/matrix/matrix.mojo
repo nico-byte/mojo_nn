@@ -1,7 +1,9 @@
 from memory import Pointer
 from memory import memset_zero
 from random import randn, rand
-from algorithm import vectorize
+from algorithm import vectorize, parallelize
+from algorithm import Static2DTileUnitFunc as Tile2DFunc
+from algorithm import vectorize_unroll
 
 # combined code from offical Mat Mul Doc and some types from github
 # https://docs.modular.com/mojo/notebooks/Matmul.html
@@ -228,11 +230,12 @@ struct Matrix:
                     C[i, j] += rhs[i, k] * rhs[k, j]
         return C
     
+    @staticmethod
     fn update(C: Matrix, A: Matrix, B: Float64):
-        for i in range(C.height):
-            for j in range(C.width):
-                C[i, j] = C[i, j] - A[i, j] * B
-    
+        for m in range(C.height):
+            for k in range(C.width):
+                C[m, k] = C[m, k] - A[m, k] * B
+
     @staticmethod
     fn matmul_vectorized(C: Matrix, A: Matrix, B: Matrix):
         """
@@ -253,59 +256,4 @@ struct Matrix:
                 @parameter
                 fn dot[nelts : Int](n : Int):
                     C.store[nelts](m, n, C.load[nelts](m, n) + A[m, k] * B.load[nelts](k, n))
-                vectorize[nelts, dot](C.width)
-
-    @staticmethod
-    fn matmul_vectorized_scal(C: Matrix, A: Matrix, B: Float64):
-        """
-        Used for updating the weights and bias of the network, matrices need to be in the same shape.
-        C: Output Matrix
-        A: Input Matrix A
-        B: Input Matrix B
-        C -= A @ B
-        This function could be better.
-        """
-        for m in range(C.height):
-            for k in range(A.width):
-                @parameter
-                fn dot[nelts : Int](n : Int):
-                    C.store[nelts](m, n, C.load[nelts](m, n) + A[m, k] * B)
-                vectorize[nelts, dot](C.width)
-
-    
-    # Matrices have to have the same dimensions
-    @staticmethod
-    fn matmul_vectorized_neg(C: Matrix, A: Matrix, B: Matrix):
-        """
-        Used for updating the weights and bias of the network, matrices need to be in the same shape.
-        C: Output Matrix
-        A: Input Matrix A
-        B: Input Integer B
-        C -= A * B
-        This function could be better.
-        """
-        if A.height != B.height != C.height and A.width != B.width != C.width:
-            print("Negative Mat Mul not possible -> A.height: " + String(A.height) + ", A.width: " + String(A.width) + " and B.height: " + String(B.height), ", B.width: " + String(B.width) + " don't match C.height: " + String(C.height) + ", C.width: " + String(C.width))
-        for m in range(C.height):
-            for k in range(A.width):
-                @parameter
-                fn dot[nelts : Int](n : Int):
-                    C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B.load[nelts](k, n))
-                vectorize[nelts, dot](C.width)
-    
-    @staticmethod
-    fn matmul_vectorized_scal_neg(C: Matrix, A: Matrix, B: Float64):
-        """
-        Used for updating the weights and bias of the network, matrices need to be in the same shape.
-        C: Output Matrix
-        A: Input Matrix A
-        B: Input Matrix B
-        C -= A @ B
-        This function could be better.
-        """
-        for m in range(C.height):
-            for k in range(A.width):
-                @parameter
-                fn dot[nelts : Int](n : Int):
-                    C.store[nelts](m, n, C.load[nelts](m, n) - A[m, k] * B)
                 vectorize[nelts, dot](C.width)

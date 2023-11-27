@@ -168,6 +168,10 @@ struct Network:
         var ih1_ho2: Matrix = Matrix(inputs_h1.width, ho2_drelu.width)
         var i_ho1: Matrix = Matrix(inputs.height, ho1_drelu.width)
         
+        Matrix.matmul_vectorized(ih2_o, inputs_h2.transpose(), output_error_gradient)
+        Matrix.matmul_vectorized(ih1_ho2, inputs_h1.transpose(), ho2_drelu)
+        Matrix.matmul_vectorized(i_ho1, inputs, ho1_drelu)
+
         # updating weights and biases
         Matrix.update(self._who, ih2_o, self.lr)
         Matrix.update(self._whh, ih1_ho2, self.lr)
@@ -176,10 +180,6 @@ struct Network:
         Matrix.update(self._bho, output_error_gradient, self.lr)
         Matrix.update(self._bih_l1, ho2_drelu, self.lr)
         Matrix.update(self._bih_l2, ho1_drelu, self.lr)
-
-        Matrix.matmul_vectorized(ih2_o, inputs_h2.transpose(), output_error_gradient)
-        Matrix.matmul_vectorized(ih1_ho2, inputs_h1.transpose(), ho2_drelu)
-        Matrix.matmul_vectorized(i_ho1, inputs, ho1_drelu)
 
         '''
         var who_: Matrix = Matrix(self._who.height, self._who.width)
