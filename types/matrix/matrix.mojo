@@ -1,9 +1,7 @@
 from memory import Pointer
 from memory import memset_zero
 from random import randn, rand
-from algorithm import vectorize, parallelize
-from algorithm import Static2DTileUnitFunc as Tile2DFunc
-from algorithm import vectorize_unroll
+from algorithm import vectorize
 
 # combined code from offical Mat Mul Doc and some types from github
 # https://docs.modular.com/mojo/notebooks/Matmul.html
