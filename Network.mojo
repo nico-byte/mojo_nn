@@ -157,7 +157,7 @@ struct Network:
         
         output_error = (targets - outputs)**2
         var loss: Matrix = Matrix(1, 1)
-        loss.store[1](0, 0, nj.mean(output_error)**2)
+        loss[0, 0] = nj.mean(output_error)**2
         output_error = Matrix(Float32(loss[0, 0]), output_error.rows, output_error.cols)
         output_error_gradient = self.dmse(output_error)
         
