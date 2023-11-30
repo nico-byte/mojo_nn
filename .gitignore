@@ -2,3 +2,5 @@
 .vscode
 __pycache__
 main
+test_numjo
+matmul

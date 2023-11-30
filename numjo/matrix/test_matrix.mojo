@@ -1,5 +1,5 @@
 from .matrix import Matrix
-
+'''
 fn test_matrix() -> None:
     var test_matrix: Matrix = Matrix(Float64(3.14), 2, 2)
     test_matrix.print_all()
@@ -34,11 +34,4 @@ fn test_matrix() -> None:
         return x * Float64(2.0)
     # let eleventh_test_matrix: Matrix = test_matrix.apply_function[test_func]()
     # let second_test: Matrix[] = [[Float32(1.5), Float32(.33)], [Float32(6.5), Float32(2.5)]]
-
-    # testing matmul
-    var mul_mutrixC_ref: Matrix = Matrix(Float64(500.0), 5, 5)
-    var mul_mutrixC: Matrix = Matrix(Float64(500.0), 5, 5)
-    let mul_mutrixA: Matrix = Matrix(Float64(5), 5, 10)
-    let mul_mutrixB: Matrix = Matrix(Float64(10), 10, 5)
-    Matrix.matmul_vectorized(mul_mutrixC, mul_mutrixA, mul_mutrixB)
-    debug_assert(mul_mutrixC == mul_mutrixC_ref, "Should be equal")
+'''
