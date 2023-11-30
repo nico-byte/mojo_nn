@@ -62,7 +62,7 @@ fn main() raises:
         for j in range(mnist_test_labels.shape[1]):
             test_labels[i, j] = mnist_test_labels[i][j].to_float64().cast[DType.float32]()
     
-    py_matmul.py_matmul_benchmark()
+    _ = py_matmul.py_matmul_benchmark()
     matmul_benchmark()
 
     var peval_nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
