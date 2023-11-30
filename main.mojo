@@ -4,6 +4,8 @@ from python import Python
 from time import now
 import numjo as nj
 from random import randn, rand
+from matmul import matmul_benchmark
+
 
 fn main() raises:
     let input_nodes = 784
@@ -11,14 +13,12 @@ fn main() raises:
     let hidden_nodes_2 = 80
     let output_nodes = 10
     let learning_rate = 1e-4
-    var outputs = Matrix(1, output_nodes, True)
-    
-    var peval_nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
-    # var train_nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
+    var outputs = Matrix(1, output_nodes)
 
     # download dataset first - https://www.kaggle.com/datasets/oddrationale/mnist-in-csv
     Python.add_to_path("./")
     let DataLoader = Python.import_module("DataLoader")
+    let py_matmul = Python.import_module("py_matmul")
     let np = Python.import_module("numpy")
 
     print("\nStarting python mnist data loader")
@@ -34,11 +34,11 @@ fn main() raises:
     mnist_train_labels  = DataLoader.mnist_labels("train", output_nodes)
     mnist_test_labels = DataLoader.mnist_labels("", output_nodes)
     
-    let test_inputs: Matrix = Matrix(10000, 784, True)
-    let test_labels: Matrix = Matrix(10000, 10, True)
+    let test_inputs: Matrix = Matrix(10000, 784)
+    let test_labels: Matrix = Matrix(10000, 10)
 
-    let train_inputs: Matrix = Matrix(60000, 784, True)
-    let train_labels: Matrix = Matrix(60000, 10, True)
+    let train_inputs: Matrix = Matrix(60000, 784)
+    let train_labels: Matrix = Matrix(60000, 10)
     
     print("Starting train data converter")
     for i in range(mnist_test_inputs.shape[0]):
@@ -62,16 +62,21 @@ fn main() raises:
         for j in range(mnist_test_labels.shape[1]):
             test_labels[i, j] = mnist_test_labels[i][j].to_float64().cast[DType.float32]()
     
+    py_matmul.py_matmul_benchmark()
+    matmul_benchmark()
 
-    var mse: Matrix = Matrix(1, 1, True)
+    var peval_nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
+    # var train_nn = Network(input_nodes=input_nodes, hidden_nodes_l1=hidden_nodes_1, hidden_nodes_l2=hidden_nodes_2, output_nodes=output_nodes, learning_rate=learning_rate)
+    
+    var mse: Matrix = Matrix(1, 1)
 
     print("Start evaluating performance")
-    var iter_time: Matrix = Matrix(1, 1, True)
+    var iter_time: Matrix = Matrix(1, 1)
     var time_sum: Float32 = 0.0
     var iter: Int = 0
     
-    var new_input: Matrix = Matrix(1, input_nodes, True)
-    var new_label: Matrix = Matrix(1, output_nodes, True)
+    var new_input: Matrix = Matrix(1, input_nodes)
+    var new_label: Matrix = Matrix(1, output_nodes)
     
     var time_now = now()
     for i in range(test_inputs.rows):

@@ -2,7 +2,7 @@ from numjo import matmul_vectorized, matmul, Matrix
 from random import rand
 from time import now
 
-fn main() -> None:
+fn matmul_benchmark() -> None:
     let M: Int = 512
     let K: Int = 512
 

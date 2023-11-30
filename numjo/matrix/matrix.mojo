@@ -1,4 +1,4 @@
-from memory import Pointer
+from memory.unsafe import Pointer
 from memory import memset_zero
 from random import randn, rand, seed
 from algorithm import vectorize
@@ -19,10 +19,9 @@ struct Matrix:
     var cols: Int
 
     # Initialize
-    fn __init__(inout self, rows: Int, cols: Int, zero:Bool = False):
+    fn __init__(inout self, rows: Int, cols: Int):
         self.data = DTypePointer[type].alloc(rows * cols)
-        if zero:    
-            memset_zero(self.data, rows * cols)
+        memset_zero(self.data, rows * cols)
         self.rows = rows
         self.cols = cols
 

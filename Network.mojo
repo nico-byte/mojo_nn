@@ -60,7 +60,7 @@ struct Network:
 
     @staticmethod
     fn relu(A: Matrix) -> Matrix:
-        var B: Matrix = Matrix(A.rows, A.cols, True)
+        var B: Matrix = Matrix(A.rows, A.cols)
         for i in range(B.rows):
             for j in range(B.cols):
                 if A[i, j] > 0.01:
@@ -71,7 +71,7 @@ struct Network:
 
     @staticmethod
     fn drelu(A: Matrix) -> Matrix:
-        var B: Matrix = Matrix(A.rows, A.cols, True)
+        var B: Matrix = Matrix(A.rows, A.cols)
         for i in range(B.rows):
             for j in range(B.cols):
                 if A[i, j] > 0.01:
@@ -83,7 +83,7 @@ struct Network:
     @staticmethod
     fn tanh(A: Matrix) -> Matrix:
         # could need optimization alot
-        var B: Matrix = Matrix(A.rows, A.cols, True)
+        var B: Matrix = Matrix(A.rows, A.cols)
         
         for i in range(A.rows):
             for j in range(A.cols):
@@ -93,7 +93,7 @@ struct Network:
     @staticmethod
     fn dtanh(A: Matrix) -> Matrix:
         # could need optimization alot
-        var B: Matrix = Matrix(A.rows, A.cols, True)
+        var B: Matrix = Matrix(A.rows, A.cols)
         
         for i in range(A.rows):
             for j in range(A.cols):
@@ -103,9 +103,9 @@ struct Network:
     @staticmethod
     fn softmax_1d(A: Matrix) -> Matrix:
         # could need optimization alot
-        var B: Matrix = Matrix(A.rows, A.cols, True)
+        var B: Matrix = Matrix(A.rows, A.cols)
         
-        var row_exp_sum_mat: Matrix = Matrix(A.rows, 1, True)
+        var row_exp_sum_mat: Matrix = Matrix(A.rows, 1)
         for i in range(A.rows):
             for j in range(A.cols):
                     B[i, j] += exp(A[i, j])
@@ -141,19 +141,16 @@ struct Network:
         
         let time_now = now()
         # calc output hidden layer1
-        inputs_h1.zero()
         nj.matmul_vectorized(inputs_h1, inputs, self._wih)
         inputs_h1 = inputs_h1 + self._bih_l1
         inputs_h1 = self.relu(inputs_h1)
         
         # calc output hidden layer 2
-        inputs_h2.zero()
         nj.matmul_vectorized(inputs_h2, inputs_h1, self._whh)
         inputs_h2 = inputs_h2 + self._bih_l2
         inputs_h2 = self.tanh(inputs_h2)
         
         # calc output output layer
-        outputs.zero()
         nj.matmul_vectorized(outputs, inputs_h2, self._who)
         outputs = outputs + self._bho
         outputs = self.softmax_1d(outputs)
@@ -194,11 +191,8 @@ struct Network:
         var ih1_ho2: Matrix = Matrix(inputs_h1.cols, ho2_drelu.cols)
         var i_ho1: Matrix = Matrix(inputs.cols, ho1_drelu.cols)
         
-        ih2_o.zero()
         nj.matmul_vectorized(ih2_o, inputs_h2.transpose(), output_error_gradient)
-        ih1_ho2.zero()
         nj.matmul_vectorized(ih1_ho2, inputs_h1.transpose(), ho2_drelu)
-        i_ho1.zero()
         nj.matmul_vectorized(i_ho1, inputs.transpose(), ho1_drelu)
 
         # updating weights and biases

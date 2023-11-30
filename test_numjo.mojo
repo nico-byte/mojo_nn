@@ -66,16 +66,16 @@ fn main() -> None:
     nj.matmul(mul_matrix_C, mul_matrix_A, mul_matrix_B)
     mul_matrix_C.print_all()
 
-    let A: Matrix = Matrix(1, 50)
-    rand(A.data, A.rows * A.cols)
+    let A: Matrix = Matrix(2, 50)
+    randn(A.data, A.rows * A.cols)
     A.print_all()
 
-    let B: Matrix = Matrix(50, 1)
-    rand(B.data, B.rows * B.cols)
+    let B: Matrix = Matrix(50, 2)
+    randn(B.data, B.rows * B.cols)
     A.print_all()
 
     let C: Matrix = Matrix(A.rows, B.cols)
-    nj.matmul(C, A, B)
+    nj.matmul_vectorized(C, A, B)
     C.print_all()
 
     A[0, 35] = 0.99
@@ -83,7 +83,3 @@ fn main() -> None:
 
     print(nj.mean(A))
     print(nj.sum(A))
-
-    
-
-    
