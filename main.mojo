@@ -1,25 +1,25 @@
 from Network import Network
-from numjo import Matrix
+from matrix import Matrix
 from python import Python
 from time import now
-import numjo as nj
 from random import randn, rand
 from matmul import matmul_benchmark
+from collections import List
 
 
 fn main() raises:
-    let input_nodes = 784
-    let hidden_nodes_1 = 150
-    let hidden_nodes_2 = 80
-    let output_nodes = 10
-    let learning_rate = 1e-4
+    var input_nodes = 784
+    var hidden_nodes_1 = 150
+    var hidden_nodes_2 = 80
+    var output_nodes = 10
+    var learning_rate: Float32 = 1e-4
     var outputs = Matrix(1, output_nodes)
 
     # download dataset first - https://www.kaggle.com/datasets/oddrationale/mnist-in-csv
     Python.add_to_path("./")
-    let DataLoader = Python.import_module("DataLoader")
-    let py_matmul = Python.import_module("py_matmul")
-    let np = Python.import_module("numpy")
+    var DataLoader = Python.import_module("DataLoader")
+    var py_matmul = Python.import_module("py_matmul")
+    var np = Python.import_module("numpy")
 
     print("\nStarting python mnist data loader")
     var mnist_train_inputs = np.array
@@ -34,11 +34,11 @@ fn main() raises:
     mnist_train_labels  = DataLoader.mnist_labels("train", output_nodes)
     mnist_test_labels = DataLoader.mnist_labels("", output_nodes)
     
-    let test_inputs: Matrix = Matrix(10000, 784)
-    let test_labels: Matrix = Matrix(10000, 10)
+    var test_inputs: Matrix = Matrix(10000, 784)
+    var test_labels: Matrix = Matrix(10000, 10)
 
-    let train_inputs: Matrix = Matrix(60000, 784)
-    let train_labels: Matrix = Matrix(60000, 10)
+    var train_inputs: Matrix = Matrix(60000, 784)
+    var train_labels: Matrix = Matrix(60000, 10)
     
     print("Starting train data converter")
     for i in range(mnist_test_inputs.shape[0]):
@@ -77,41 +77,46 @@ fn main() raises:
     
     var new_input: Matrix = Matrix(1, input_nodes)
     var new_label: Matrix = Matrix(1, output_nodes)
+
+    var inputs = List[Matrix]()
+    var labels = List[Matrix]()
     
     var time_now = now()
     for i in range(test_inputs.rows):
-            for j in range(test_inputs.cols):
-                new_input[0, j] = test_inputs[i, j]
-                if j <= 9:
-                    new_label[0, j] = test_labels[i, j]
-        
-        # new_input.print_all()
-        # new_label.print_all()
-        iter_time = peval_nn.train(new_input, new_label, peval=True)
+        for j in range(test_inputs.cols):
+            new_input[0, j] = test_inputs[i, j]
+            if j <= 9:
+                new_label[0, j] = test_labels[i, j]
+        inputs.append(new_input)
+        labels.append(new_label)
+    
+    
+    for i in range(len(inputs)-1):
+        iter_time = peval_nn.train(inputs[i], new_label, peval=True)
         time_sum += iter_time[0, 0]
         iter += 1
 
     var avg_time: Float32 = time_sum / test_inputs.rows
-    print("verify iterations: " + String(iter))
-    print("avg mat duration/iter: " + String(avg_time / 1e3) + " microseconds")
-    print("Runtime (Forward Pass + Backward Pass): " + String((now() - time_now) / 1e9) + " seconds")
+    print("verify iterations: " + str(iter))
+    print("avg mat duration/iter: " + str(avg_time / 1e3) + " microseconds")
+    print("Runtime (Forward Pass + Backward Pass): " + str((now() - time_now) / 1e9) + " seconds")
     
     iter = 0
     time_sum = 0.0
     time_now = now()
     for i in range(test_inputs.rows):
-            for j in range(test_inputs.cols):
-                new_input[0, j] = test_inputs[i, j]
-                if j <= 9:
-                    new_label[0, j] = test_labels[i, j]
+        for j in range(test_inputs.cols):
+            new_input[0, j] = test_inputs[i, j]
+            if j <= 9:
+                new_label[0, j] = test_labels[i, j]
         iter_time = peval_nn.query(new_input, new_label, peval=True)
         time_sum += iter_time[0, 0]
         iter += 1
 
     avg_time = time_sum / test_inputs.rows
-    print("\nverify iterations: " + String(iter))
-    print("avg mat duration/iter: " + String(avg_time / 1e3) + " microseconds")
-    print("Runtime (Forward Pass): " + String((now() - time_now) / 1e9) + " seconds")
+    print("\nverify iterations: " + str(iter))
+    print("avg mat duration/iter: " + str(avg_time / 1e3) + " microseconds")
+    print("Runtime (Forward Pass): " + str((now() - time_now) / 1e9) + " seconds")
     '''
     
     var loss: Float32 = 0.0

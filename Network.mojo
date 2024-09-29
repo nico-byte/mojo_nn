@@ -1,11 +1,11 @@
 from random import rand, randn
 from math import sqrt
-from memory.unsafe import DTypePointer
-import numjo as nj
-from numjo import Matrix
+from memory.unsafe_pointer import UnsafePointer
+from matrix import Matrix
 from time import now
 from math import tanh
 from math import exp
+from toolbox import mean, update, matmul_vectorized
 
 struct Network:
     var _inodes: Int
@@ -53,10 +53,10 @@ struct Network:
         # rand(self._bho.data, self._bho.rows * self._bho.cols)
         
         print('Initialized a neural network\n'
-              'Input Nodes: ' + String(self._inodes) + '\n'
-              'Hidden Nodes Layer 1: ' + String(self._hnodes_l1) + '\n'
-              'Hidden Nodes Layer 2: ' + String(self._hnodes_l2) + '\n'
-              'Output Nodes: ' + String(self._onodes))
+              'Input Nodes: ' + str(self._inodes) + '\n'
+              'Hidden Nodes Layer 1: ' + str(self._hnodes_l1) + '\n'
+              'Hidden Nodes Layer 2: ' + str(self._hnodes_l2) + '\n'
+              'Output Nodes: ' + str(self._onodes))
 
     @staticmethod
     fn relu(A: Matrix) -> Matrix:
@@ -121,12 +121,12 @@ struct Network:
     
     @staticmethod
     fn dmse(output_error: Matrix) -> Matrix:
-        let deriv_coef: Float32 = 2.0 / output_error.cols
-        let deriv = output_error * Matrix(Float32(deriv_coef), output_error.rows, output_error.cols)
+        var deriv_coef: Float32 = Float32(2.0) / output_error.cols
+        var deriv = output_error * Matrix(Float32(deriv_coef), output_error.rows, output_error.cols)
         return deriv
     
     fn query(inout self, inputs: Matrix, targets: Matrix, peval: Bool = False) -> Matrix:
-        let output: Matrix = self.train(inputs, targets, train = False, peval=peval)
+        var output: Matrix = self.train(inputs, targets, train = False, peval=peval)
         return output
     
     fn train(inout self, inputs: Matrix, targets: Matrix, train: Bool = True, peval: Bool = False) -> Matrix:
@@ -139,43 +139,43 @@ struct Network:
         var hidden_errors_1: Matrix = Matrix(hidden_errors_2.rows, self._whh.rows)
         var outputs: Matrix = Matrix(1, self._onodes)
         
-        let time_now = now()
+        var time_now = now()
         # calc output hidden layer1
-        nj.matmul_vectorized(inputs_h1, inputs, self._wih)
+        matmul_vectorized(inputs_h1, inputs, self._wih)
         inputs_h1 = inputs_h1 + self._bih_l1
         inputs_h1 = self.relu(inputs_h1)
         
         # calc output hidden layer 2
-        nj.matmul_vectorized(inputs_h2, inputs_h1, self._whh)
+        matmul_vectorized(inputs_h2, inputs_h1, self._whh)
         inputs_h2 = inputs_h2 + self._bih_l2
         inputs_h2 = self.tanh(inputs_h2)
         
         # calc output output layer
-        nj.matmul_vectorized(outputs, inputs_h2, self._who)
+        matmul_vectorized(outputs, inputs_h2, self._who)
         outputs = outputs + self._bho
         outputs = self.softmax_1d(outputs)
         
         output_error = (targets - outputs)**2
         var loss: Matrix = Matrix(1, 1)
-        loss[0, 0] = nj.mean(output_error)**2
+        loss[0, 0] = mean(output_error)**2
         output_error = Matrix(Float32(loss[0, 0]), output_error.rows, output_error.cols)
         output_error_gradient = self.dmse(output_error)
         
-        nj.matmul_vectorized(hidden_errors_2, output_error_gradient, self._who.transpose())
-        nj.matmul_vectorized(hidden_errors_1, (hidden_errors_2 * self.dtanh(inputs_h2)), self._whh.transpose())
+        matmul_vectorized(hidden_errors_2, output_error_gradient, self._who.transpose())
+        matmul_vectorized(hidden_errors_1, (hidden_errors_2 * self.dtanh(inputs_h2)), self._whh.transpose())
         
         var end_time_mat: Matrix = Matrix(1, 1)
 
         if train:
             self._update(inputs, inputs_h1, inputs_h2, hidden_errors_1, hidden_errors_2, output_error_gradient)
-            let end_time = Float32(now() - time_now)
+            var end_time = Float32(now() - time_now)
             end_time_mat.store[1](0, 0, end_time)
             if peval:
                 return end_time_mat
             else:
                 return loss
         
-        let end_time = Float32(now() - time_now)
+        var end_time = Float32(now() - time_now)
         end_time_mat.store[1](0, 0, end_time)
         
         if peval:
@@ -184,24 +184,24 @@ struct Network:
         return outputs
         
     fn _update(inout self, inputs: Matrix, inputs_h1: Matrix, inputs_h2: Matrix, hidden_errors_1: Matrix, hidden_errors_2: Matrix, output_error_gradient: Matrix):
-        let ho2_drelu: Matrix = hidden_errors_2 * self.dtanh(inputs_h2)
-        let ho1_drelu: Matrix = hidden_errors_1 * self.drelu(inputs_h1)
+        var ho2_drelu: Matrix = hidden_errors_2 * self.dtanh(inputs_h2)
+        var ho1_drelu: Matrix = hidden_errors_1 * self.drelu(inputs_h1)
 
         var ih2_o: Matrix = Matrix(inputs_h2.cols, output_error_gradient.cols)
         var ih1_ho2: Matrix = Matrix(inputs_h1.cols, ho2_drelu.cols)
         var i_ho1: Matrix = Matrix(inputs.cols, ho1_drelu.cols)
         
-        nj.matmul_vectorized(ih2_o, inputs_h2.transpose(), output_error_gradient)
-        nj.matmul_vectorized(ih1_ho2, inputs_h1.transpose(), ho2_drelu)
-        nj.matmul_vectorized(i_ho1, inputs.transpose(), ho1_drelu)
+        matmul_vectorized(ih2_o, inputs_h2.transpose(), output_error_gradient)
+        matmul_vectorized(ih1_ho2, inputs_h1.transpose(), ho2_drelu)
+        matmul_vectorized(i_ho1, inputs.transpose(), ho1_drelu)
 
         # updating weights and biases
-        nj.update(self._who, ih2_o, self.lr)
-        nj.update(self._whh, ih1_ho2, self.lr)
-        nj.update(self._wih, i_ho1, self.lr)
+        update(self._who, ih2_o, self.lr)
+        update(self._whh, ih1_ho2, self.lr)
+        update(self._wih, i_ho1, self.lr)
 
         # sum of the A matrices would be better
-        nj.update(self._bho, output_error_gradient, self.lr)
-        nj.update(self._bih_l1, ho2_drelu, self.lr)
-        nj.update(self._bih_l2, ho1_drelu, self.lr)
+        update(self._bho, output_error_gradient, self.lr)
+        update(self._bih_l1, ho2_drelu, self.lr)
+        update(self._bih_l2, ho1_drelu, self.lr)
         

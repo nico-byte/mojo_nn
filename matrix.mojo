@@ -1,7 +1,9 @@
-from memory.unsafe import Pointer
+from memory import memcpy
+from memory.unsafe_pointer import UnsafePointer
+from sys import simdwidthof
 from memory import memset_zero
 from random import randn, rand, seed
-from algorithm import vectorize
+from algorithm.functional import vectorize
 
 
 # combined code from offical Mat Mul Doc and some types from github
@@ -14,20 +16,20 @@ alias nelts = simdwidthof[type]()
 
 struct Matrix:
     """Simple 2D Matrix that uses Float32."""
-    var data: DTypePointer[type]
+    var data: UnsafePointer[Scalar[type]]
     var rows: Int
     var cols: Int
 
     # Initialize
     fn __init__(inout self, rows: Int, cols: Int):
-        self.data = DTypePointer[type].alloc(rows * cols)
+        self.data = UnsafePointer[Scalar[type]].alloc(rows * cols)
         memset_zero(self.data, rows * cols)
         self.rows = rows
         self.cols = cols
 
     # Initialize taking a pointer, don't set any elements
-    fn __init__(inout self, rows: Int, cols: Int, data: DTypePointer[type]):
-        self.data = DTypePointer[type].alloc(rows * cols)
+    fn __init__(inout self, rows: Int, cols: Int, data: UnsafePointer[Scalar[type]]):
+        self.data = UnsafePointer[Scalar[type]].alloc(rows * cols)
         self.rows = rows
         self.cols = cols
 
@@ -35,21 +37,21 @@ struct Matrix:
     fn __init__(inout self, owned default_value: Float32, rows: Int, cols: Int) -> None:
         self.rows = rows if rows > 0 else 1
         self.cols = cols if cols > 0 else 1
-        self.data = DTypePointer[type].alloc(rows * cols)
+        self.data = UnsafePointer[Scalar[type]].alloc(rows * cols)
         for i in range(rows * cols):
             self.data.store(i, default_value)
 
     ## Initialize with random values
     @staticmethod
     fn rand(rows: Int, cols: Int) -> Self:
-        let data = DTypePointer[type].alloc(rows * cols)
+        var data = UnsafePointer[Scalar[type]].alloc(rows * cols)
         rand(data, rows * cols)
         return Self(rows, cols, data)
 
     ## Initialize with random n values
     @staticmethod
     fn randn(rows: Int, cols: Int) -> Self:
-        let data = DTypePointer[type].alloc(rows * cols)
+        var data = UnsafePointer[Scalar[type]].alloc(rows * cols)
         randn(data, rows * cols)
         return Self(rows, cols, data)
     
@@ -63,10 +65,10 @@ struct Matrix:
         return self.store[1](y, x, val)
 
     fn load[nelts: Int](self, y: Int, x: Int) -> SIMD[DType.float32, nelts]:
-        return self.data.simd_load[nelts](y * self.cols + x)
+        return self.data.load[width=nelts](y * self.cols + x)
 
     fn store[nelts: Int](self, y: Int, x: Int, val: SIMD[DType.float32, nelts]):
-        return self.data.simd_store[nelts](y * self.cols + x, val)
+        return self.data.store[width=nelts](y * self.cols + x, val)
     
     fn __len__(borrowed self) -> Int:
         return self.rows * self.cols
@@ -74,14 +76,14 @@ struct Matrix:
     fn __copyinit__(inout self, other: Self) -> None:
         self.rows = other.rows
         self.cols = other.cols
-        self.data = Pointer[Float32].alloc(other.rows * other.cols)
-        memcpy[type](self.data, other.data, other.rows * other.cols)
+        self.data = UnsafePointer[Float32].alloc(other.rows * other.cols)
+        memcpy[](self.data, other.data, other.rows * other.cols)
 
     fn __moveinit__(inout self, owned other: Self) -> None:
         self.rows = other.rows
         self.cols = other.cols
-        self.data = Pointer[Float32].alloc(other.rows * other.cols)
-        memcpy[type](self.data, other.data, other.rows * other.cols)
+        self.data = UnsafePointer[Float32].alloc(other.rows * other.cols)
+        memcpy(self.data, other.data, other.rows * other.cols)
 
     fn __lt__(borrowed self, rhs: Matrix) -> Bool:
         for i in range(self.rows):
@@ -100,8 +102,8 @@ struct Matrix:
     fn __eq__(borrowed self, rhs: Matrix) -> Bool:
         for i in range(self.rows):
             for j in range(self.cols):
-                let self_val: Float32 = self[i, j]
-                let rhs_val: Float32 = rhs[i, j]
+                var self_val: Float32 = self[i, j]
+                var rhs_val: Float32 = rhs[i, j]
                 if self_val < rhs_val or self_val > rhs_val:
                     return False
         return True
@@ -195,28 +197,28 @@ struct Matrix:
     fn print_all(borrowed self) -> None:
         print("[")
         for i in range(self.rows):
-            print_no_newline("    [")
+            print("    [", end='', flush=True)
             for j in range(self.cols):
-                print_no_newline(self[i, j])
+                print(self[i, j], end='', flush=True)
                 if j != self.cols - 1:
-                    print_no_newline(", ")
+                    print(", ", end='', flush=True)
             print("]," if i != self.rows - 1 else "]")
         print("]")
 
     fn print_row(borrowed self, row: Int) -> None:
         print("[")
         for i in range(self.cols):
-            print_no_newline(self[row, i])
+            print(self[row, i], end='', flush=True)
         print("]")
     
     fn print_col(borrowed self, col: Int) -> None:
         print("[")
         for i in range(self.rows):
-            print_no_newline(self[i, col])
+            print(self[i, col], end='', flush=True)
         print("]")
 
     fn shape(borrowed self) -> None:
-        print("[" + String(self.rows) + "," + String(self.cols) + "]")
+        print("[" + str(self.rows) + "," + str(self.cols) + "]")
     
     fn transpose(borrowed self) -> Matrix:
         """
@@ -239,11 +241,11 @@ struct Matrix:
         """
         var C: Matrix = Matrix(self.rows, rhs.cols)
         if self.cols != rhs.rows:
-            print("Mat Mul not possible -> A.cols: " + String(self.cols) + " != B.rows: " + String(rhs.rows))
+            print("Mat Mul not possible -> A.cols: " + str(self.cols) + " != B.rows: " + str(rhs.rows))
         for m in range(C.rows):
             for k in range(self.cols):
                 @parameter
                 fn dot[nelts : Int](n : Int):
                     C.store[nelts](m, n, C.load[nelts](m, n) + self[m, k] * rhs.load[nelts](k, n))
-                vectorize[nelts, dot](C.cols)
+                vectorize[dot, nelts](C.cols)
         return C

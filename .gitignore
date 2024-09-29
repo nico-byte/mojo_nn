@@ -1,5 +1,6 @@
 *.csv
 .vscode
+.magic
 __pycache__
 main
 test_numjo

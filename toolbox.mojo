@@ -1,5 +1,6 @@
-from numjo import Matrix
-from algorithm import vectorize
+from matrix import Matrix
+from algorithm.functional import vectorize
+from sys import simdwidthof
 
 alias type = DType.float32
 alias nelts = simdwidthof[type]()
@@ -21,7 +22,7 @@ fn update(C: Matrix, A: Matrix, B: Float32):
             C[m, k] = C[m, k] - A[m, k] * B
 
 fn mean(A: Matrix) -> Float32:
-    let mean: Float32 = sum(A) / (A.rows * A.cols)
+    var mean: Float32 = sum(A) / (A.rows * A.cols)
     return mean
     
 fn sum(A: Matrix) -> Float32:
@@ -47,10 +48,10 @@ fn matmul_vectorized(C: Matrix, A: Matrix, B: Matrix):
     A, B and C have to meet the requirements for the matmul - A.cols == B.rows, C.rows == A.rows and C.cols == B.cols.
     """
     if A.cols != B.rows:
-        print("Mat Mul not possible -> A.cols: " + String(A.cols) + " != B.rows: " + String(B.rows))
+        print("Mat Mul not possible -> A.cols: " + str(A.cols) + " != B.rows: " + str(B.rows))
         
     if C.rows != A.rows or C.cols != B.cols:
-        print("Mat Mul not possible -> A.rows: " + String(A.rows) + ", A.cols: " + String(A.cols) + " and B.rows: " + String(B.rows), ", B.cols: " + String(B.cols) + " don't match C.rows: " + String(C.rows) + ", C.cols: " + String(C.cols))
+        print("Mat Mul not possible -> A.rows: " + str(A.rows) + ", A.cols: " + str(A.cols) + " and B.rows: " + str(B.rows), ", B.cols: " + str(B.cols) + " don't match C.rows: " + str(C.rows) + ", C.cols: " + str(C.cols))
 
     for m in range(C.rows):
         for k in range(A.cols):
@@ -61,7 +62,7 @@ fn matmul_vectorized(C: Matrix, A: Matrix, B: Matrix):
                     m, n, C.load[nelts](m, n) + A[m, k] * B.load[nelts](k, n)
                 )
 
-            vectorize[nelts, dot](C.cols)
+            vectorize[dot, nelts](C.cols)
 
 fn matmul(C: Matrix, A: Matrix, B: Matrix):
     """
@@ -73,10 +74,10 @@ fn matmul(C: Matrix, A: Matrix, B: Matrix):
     A, B and C have to meet the requirements for the matmul - A.cols == B.rows, C.rows == A.rows and C.cols == B.cols.
     """
     if A.cols != B.rows:
-        print("Mat Mul not possible -> A.cols: " + String(A.cols) + " != B.rows: " + String(B.rows))
+        print("Mat Mul not possible -> A.cols: " + str(A.cols) + " != B.rows: " + str(B.rows))
         
     if C.rows != A.rows or C.cols != B.cols:
-        print("Mat Mul not possible -> A.rows: " + String(A.rows) + ", A.cols: " + String(A.cols) + " and B.rows: " + String(B.rows), ", B.cols: " + String(B.cols) + " don't match C.rows: " + String(C.rows) + ", C.cols: " + String(C.cols))
+        print("Mat Mul not possible -> A.rows: " + str(A.rows) + ", A.cols: " + str(A.cols) + " and B.rows: " + str(B.rows), ", B.cols: " + str(B.cols) + " don't match C.rows: " + str(C.rows) + ", C.cols: " + str(C.cols))
 
     for m in range(C.rows):
         for k in range(A.cols):
